@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator</title>
+    <style>
+        body {
+            background-image: url("https://tse1.mm.bing.net/th?id=OIP.CysA_LxnogrySKQnJbhoxwHaE7&pid=Api&P=0&h=180");
+            background-repeat: no-repeat;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        h2 {
+            color: #000;
+            font-size: 36px;
+            margin: 5px 0;
+        }
+
+        p {
+            font-size: 25px;
+            margin: 5px 0;
+        }
+        
+        .team-members {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .container {
+            display: flex;
+            max-width: 900px;
+            margin: 30px auto;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-container {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .output-container {
+            flex: 1;
+            padding: 30px;
+            border-left: 1px solid #ccc;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            background: conic-gradient(#ddd 0deg, #ddd 360deg);
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+
+        .progress-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .bmi-category {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+
+        .recommendations {
+            text-align: center;
+            font-size: 16px;
+            margin-top: 15px;
+            color: #333;
+        }
+    </style>
+    <script>
+        async function calculateBMI() {
+            const weight = document.getElementById("weight").value;
+            const height = document.getElementById("height").value;
+            const age = document.getElementById("age").value;
+            const protocol = document.getElementById("protocol").value;
+
+            const data = {
+                weight: weight,
+                height: height,
+                protocol: protocol
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok, status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                document.getElementById("result").innerText = `BMI: ${result.bmi}, Category: ${result.category}`;
+                updateCircularProgress(result.bmi);
+                updateBMICategory(result.category);
+                provideRecommendations(result.bmi, age, result.category);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById("result").innerText = 'An error occurred while calculating BMI. Please try again.';
+            }
+        }
+
+        function updateCircularProgress(bmi) {
+            const progress = document.querySelector('.circular-progress');
+            const value = document.querySelector('.progress-value');
+            const percentage = (bmi / 40) * 360;
+
+            let color;
+            if (bmi < 18.5) {
+                color = '#ffcc00';
+            } else if (bmi < 24.9) {
+                color = '#28a745';
+            } else if (bmi < 29.9) {
+                color = '#ff9933';
+            } else {
+                color = '#ff3300';
+            }
+
+            progress.style.background = `conic-gradient(${color} ${percentage}deg, #ddd 0deg)`;
+            value.textContent = bmi;
+        }
+
+        function updateBMICategory(category) {
+            const bmiCategoryElem = document.querySelector('.bmi-category');
+            bmiCategoryElem.innerText = category;
+            bmiCategoryElem.style.backgroundColor = category === 'Underweight' ? '#ffcc00' :
+                category === 'Normal weight' ? '#28a745' :
+                category === 'Overweight' ? '#ff9933' : '#ff3300';
+        }
+
+        function provideRecommendations(bmi, age, category) {
+            const recommendationsElem = document.querySelector('.recommendations');
+            let recommendation = "";
+            let minIdealWeight, maxIdealWeight;
+
+            // Convert height to meters
+            const height = document.getElementById("height").value / 100;
+
+            // Calculate the ideal weight range for a 'Normal weight' BMI
+            minIdealWeight = 18.5 * (height * height);
+            maxIdealWeight = 24.9 * (height * height);
+
+            if (category === 'Underweight') {
+                recommendation = "Consider a balanced diet with increased calorie intake.";
+                if (age > 60) {
+                    recommendation += " Older adults should also focus on strength training exercises.";
+                }
+                recommendation += ` Aim to reach a weight between ${minIdealWeight.toFixed(1)} kg and ${maxIdealWeight.toFixed(1)} kg.`;
+            } else if (category === 'Normal weight') {
+                recommendation = "Maintain your current lifestyle with a balanced diet and regular exercise.";
+                if (age > 60) {
+                    recommendation += " Make sure to include low-impact exercises like walking.";
+                }
+                recommendation += ` Your ideal weight is between ${minIdealWeight.toFixed(1)} kg and ${maxIdealWeight.toFixed(1)} kg.`;
+            } else if (category === 'Overweight') {
+                recommendation = "Consider reducing calorie intake and increasing physical activity.";
+                if (age > 60) {
+                    recommendation += " Focus on low-impact cardio exercises like swimming.";
+                }
+                recommendation += ` Aim for a weight between ${minIdealWeight.toFixed(1)} kg and ${maxIdealWeight.toFixed(1)} kg.`;
+            } else {
+                recommendation = "Consult a healthcare professional for a personalized weight-loss plan.";
+                if (age > 60) {
+                    recommendation += " Focus on gentle activities to avoid stress on joints.";
+                }
+                recommendation += ` Aim for a weight between ${minIdealWeight.toFixed(1)} kg and ${maxIdealWeight.toFixed(1)} kg.`;
+            }
+
+            recommendationsElem.innerText = recommendation;
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>BMI-CALCULATOR</h1>
+        <h2>Kongu Engineering College - Perundurai</h2>
+        <p>Department of Computer Science and Engineering</p>
+        <p>Course: Computer Networks | Course Code: 22CST52</p>
+    </div>
+    <div class="team-members">
+        <p>Team Members: Abinaya B(22CSR005), Ashilin B.S(22CSR024), Ashwathi SL(22CSR026)</p>
+    </div>
+    <div class="container">
+        <div class="input-container">
+            <label for="weight">Weight (kg):</label>
+            <input type="number" id="weight" name="weight">
+
+            <label for="height">Height (cm):</label>
+            <input type="number" id="height" name="height" required>
+
+            <label for="age">Age (years):</label>
+            <input type="number" id="age" required>
+
+            <label for="protocol">Protocol:</label>
+            <select id="protocol" name="protocol" required>
+                <option value="tcp">TCP</option>
+                <option value="udp">UDP</option>
+            </select>
+
+            <button onclick="calculateBMI()">Calculate BMI</button>
+        </div>
+        <div class="output-container">
+            <div id="result" class="result"></div>
+            <div class="circular-progress">
+                <span class="progress-value">0</span>
+            </div>
+            <div class="bmi-category"></div>
+            <div class="recommendations"></div>
+        </div>
+    </div>
+</body>
+</html>
