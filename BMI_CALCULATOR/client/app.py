@@ -49,7 +49,7 @@ def calculate_bmi():
     height = data['height']
     protocol = data['protocol']
 
-    server_ip = '192.168.153.44'  # Replace with your server's IP address
+    server_ip = '192.168.1.5'  # Replace with your server's IP address
     server_port = 12345           # Replace with your server's port number
     server_addr = (server_ip, server_port)
 

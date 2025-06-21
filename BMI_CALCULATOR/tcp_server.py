@@ -21,7 +21,7 @@ def get_bmi_category(bmi):
 tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the server to a specific IP and port
-tcp_server_socket.bind(('192.168.210.253', 12345))  # Change the IP to the appropriate one for your server
+tcp_server_socket.bind(('192.168.1.5', 12345))  # Change the IP to the appropriate one for your server
 
 # Set the server to listen for incoming connections
 tcp_server_socket.listen(5)
